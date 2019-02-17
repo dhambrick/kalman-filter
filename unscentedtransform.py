@@ -73,4 +73,4 @@ class UnscentedTransform:
         self.estimatedCovariance = np.zeros(self.stateCov.shape)
         for i in xrange(2*self.N+1):
             meanCenteredSigma = self.transformedSigmas[i] - self.estimatedMean
-            self.estimatedCovariance = self.estimatedCovariance  + np.outer(meanCenteredSigma , meanCenteredSigma)
+            self.estimatedCovariance = self.estimatedCovariance  + self.covWeights[i] * np.outer(meanCenteredSigma , meanCenteredSigma)
