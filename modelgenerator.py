@@ -11,5 +11,6 @@ class ModelGenerator:
         #TODO: Add logic to check dimensions of state variable
         self.newState = self.uTransform.estimateTransformedGaussian(oldState,oldStateCov)
         self.transformedSigmaPoints = self.uTransform.transformedSigmas
+        self.covWeights = self.uTransform.covWeights
         self.newState["cov"] = self.newState["cov"] + self.NoiseCov
         return self.newState
