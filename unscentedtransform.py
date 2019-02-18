@@ -1,17 +1,12 @@
 import numpy as np 
 
 class UnscentedTransform:
-    def __init__(self,stateMean,stateCov,nonlinearTransform ,kappa,alpha,beta):
-        self.stateDim = stateMean.shape
-        self.stateMean = stateMean 
-        self.stateCov = stateCov
-        self.nlt = nonlinearTransform
+    def __init__(self,nonlinearTransform ,kappa,alpha,beta):
         #UT Parameters
-        self.N = np.max(self.stateDim)
+        self.nlt = nonlinearTransform
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
-        self.Lambda = (self.alpha*self.alpha) * (self.N + self.kappa) - self.N  
         self.SigmaPoints = []
     
     def generateSigmaPoints(self):
@@ -45,14 +40,11 @@ class UnscentedTransform:
     
     def estimateTransformedGaussian(self, stateMean , stateCov):
         #This method is where we put everything together and calculate the new state and covariance estimates
-        #We give the option to recalculate the unscented transform by being able to override any previously defined 
-        #state and covariance estimates
-        #TODO: Add logic that either updates or self.N or enforces that the passed in state and covariance are of the same dimensions of the
-
-        if stateMean is not None:
-            self.stateMean = stateMean
-        if stateCov is not None:
-            self.stateCov = stateCov
+        self.stateMean = stateMean 
+        self.stateCov = stateCov
+        self.stateDim = stateMean.shape
+        self.N = np.max(self.stateDim)
+        self.Lambda = (self.alpha*self.alpha) * (self.N + self.kappa) - self.N  
 
         #Step 1: Calculate the sigma points
         self.generateSigmaPoints()
@@ -74,3 +66,5 @@ class UnscentedTransform:
         for i in xrange(2*self.N+1):
             meanCenteredSigma = self.transformedSigmas[i] - self.estimatedMean
             self.estimatedCovariance = self.estimatedCovariance  + self.covWeights[i] * np.outer(meanCenteredSigma , meanCenteredSigma)
+        result =  {"mean":self.estimatedMean,"cov":self.estimatedCovariance}
+        return result
