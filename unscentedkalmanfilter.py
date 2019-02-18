@@ -8,7 +8,7 @@ class UnscentedKalmanFilter:
 
     def predict(self,oldState ,oldStateCov):
         self.newState = self.procModel.calcNewState(oldState,oldStateCov)
-        self.newMeasurement = self.sensorModel.calcNewState(newState["mean"],newState["cov"])
+        self.newMeasurement = self.sensorModel.calcNewState(self.newState["mean"],self.newState["cov"])
         
         self.transformedStateSigmas = self.procModel.transformedSigmas
         self.transformedMeasurementSigmas = self.sensorModel.transformedSigmas
@@ -18,9 +18,9 @@ class UnscentedKalmanFilter:
         return predictions
     
     def calcKGain(self,newState,predictedMeasure):
-        N = np.max(newState["mean"].shape
-        self.crossCovStateMeasure = np.zeros(N)
-        for i in xrange(2*N+1):
+        N = np.max(newState["mean"].shape)
+        self.crossCovStateMeasure = np.zeros((N,N))
+        for i in xrange(0,2*N+1):
             tempTerm1 = self.transformedStateSigmas[i] - newState["mean"]
             tempTerm2 = self.transformedMeasurementSigmas[i] - predictedMeasure["mean"]
             term = self.covWeights[i] * np.outer(tempTerm1 , tempTerm2)
@@ -28,9 +28,9 @@ class UnscentedKalmanFilter:
         self.K = np.matmul(self.crossCovStateMeasure ,np.linalg.inv(predictedMeasure["cov"]))    
         return self.K
     
-    def correct(self,measModel, measurement):
-        self.stateEstimate = self.stateEstimate + np.matmul(self.K , measurement - np.matmul(measModel.H,self.stateEstimate))
-        self.P = self.P - np.matmul(self.K , np.matmul(measModel.H,self.P))
-        print self.stateEstimate.shape
-        return self.stateEstimate.reshape((1,2))
-
+    def correct(self, newMeasurement):
+        correctedStateEstimate = self.newState["mean"] + self.K*(newMeasurement["mean"] - self.newMeasurement)
+        correctedStateCov = self.newState["cov"] - self.K*self.newMeasurement["cov"]*np.transpose(self.K)
+        update = {"state":correctedStateEstimate , "cov":correctedStateCov}
+        return update               
+    
