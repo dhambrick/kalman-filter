@@ -8,11 +8,16 @@ import fallingsensormodel as fsm
 
 #Set the Filter and model parameters
 N = 100
+dt = .1
 kappa = 0
 alpha = 1e-4
 beta = 2
 procCov = .25*np.eye(2)
 sensorCov = .1*np.eye(2)
+t = np.zeros(N) # 1D vector
+x0v0 = np.array([100,0]) #initial state estimate
+P0  = np.zeros((2,2)) #initial state covariance
+
 
 #create the process and sensor models
 fallingBodyModel = modgen.ModelGenerator(fbm.fallingBodyStatePropogator , kappa , alpha , beta,procCov)
@@ -21,28 +26,24 @@ fallingBodySensorModel = modgen.ModelGenerator(fsm.fallingBodySensorMeasurement 
 #Create an unscented kalman filter instance
 unscentedKalmanFilter = ukf.UnscentedKalmanFilter(fallingBodyModel ,fallingBodySensorModel)
 
+stateEstimates = np.zeros((N,2))
+measurements = np.zeros((N,2))
 
+stateEstimates[0] = x0v0
+trueState = x0v0
+
+#Start the time loop
 for i in range(1,N):
-    oldState = modelFreeFall.state[i-1].reshape((2,1))
-    modelFreeFall.state[i] = np.transpose(modelFreeFall.calcNewState(oldState))
-    trueState = modelFreeFall.state[i].reshape((2,1))
-    measure = sensor.calcNewMeasurement(trueState)
-    
-    kalman.predict(oldState,modelFreeFall,sensor)
-    kalman.calcKGain(sensor)
-    stateEstimates.append(kalman.correct(sensor,measure))
-    detP.append(np.linalg.det(kalman.P))
-
-
-    z[i] = measure.reshape(2)
     t[i] = t[i-1] + dt
-detP = np.array(detP)
-stateEstimates =  np.array(stateEstimates).reshape((99,2))
-print detP.shape,t.shape ,np.transpose(stateEstimates)[0].shape
-plt.figure()
-#plt.scatter( t, np.transpose(sensor.z)[0])
-plt.scatter(t,np.transpose(modelFreeFall.state)[0])
-plt.scatter(t[1:100],np.transpose(stateEstimates)[0])
-#plt.scatter(t[1:100],detP)
+    #Create a new observation
+    observationNoiseMean = np.zeros(2)
+    observationNoiseCov = sensorCov
+    observationNoiseSample = np.random.multivariate_normal(observationNoiseMean ,observationNoiseCov )
+    newObservation = fsm.fallingBodySensorMeasurement(trueState) + observationNoiseSample
+    trueState = fbm.fallingBodyStatePropogator(trueState)
 
-plt.show()
+    predictions = unscentedKalmanFilter.predict(stateEstimates[i-1],P0)
+    K = unscentedKalmanFilter.calcKGain(predictions["newState"],predictions["newMeasure"])
+    stateEstimates.append(unscentedKalmanFilter.correct(newObservation))
+
+    
