@@ -8,7 +8,7 @@ class UnscentedTransform:
         self.alpha = alpha
         self.beta = beta
         self.SigmaPoints = []
-    
+        self.transformedSigmas = []
     def generateSigmaPoints(self):
         gamma = np.sqrt(self.N + self.kappa) 
         #In general we calculate  2N+1 sigma points where N is the dimension of the mean vector
@@ -19,11 +19,11 @@ class UnscentedTransform:
         for i in xrange(0,self.N):
             self.SigmaPoints.append(self.stateMean + S[:,i])
             self.SigmaPoints.append(self.stateMean - S[:,i])
-        self.SigmaPoints = np.array(self.SigmaPoints)
+        #self.SigmaPoints = np.array(self.SigmaPoints)
+        
     def propagateSigmaPoints(self):
-        vecNLT = np.vectorize(self.nlt)
-        self.transformedSigmas = vecNLT(self.SigmaPoints)
-
+        for sigmaPoint in self.SigmaPoints:
+            self.transformedSigmas.append(self.nlt(sigmaPoint))
     def generateWeights(self):
         #First we generate the weights for estimating the transformed mean
         meanW0 = self.Lambda/ (self.N + self.Lambda)
@@ -51,7 +51,7 @@ class UnscentedTransform:
        
         #Step 2: Generate the weights
         self.generateWeights()
-       
+
         #Step 3: Transform the Sigma points using the supplied Transform
         self.propagateSigmaPoints()
        
