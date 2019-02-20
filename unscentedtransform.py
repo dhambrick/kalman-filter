@@ -10,7 +10,7 @@ class UnscentedTransform:
         self.SigmaPoints = []
         self.transformedSigmas = []
     def generateSigmaPoints(self):
-        gamma = np.sqrt(self.N + self.kappa) 
+        gamma = np.sqrt(self.N + self.Lambda) 
         #In general we calculate  2N+1 sigma points where N is the dimension of the mean vector
         # The first Sigma Point is simply stateMean vector itself
         self.SigmaPoints.append(self.stateMean)
@@ -55,6 +55,7 @@ class UnscentedTransform:
         #Step 3: Transform the Sigma points using the supplied Transform
         self.propagateSigmaPoints()
        
+        
         #Step 4: Calculate the propogated mean state
         #Just for pedalogical purposes we implement this step using the naive mathematical formulation ie No numpy optimizations
         self.estimatedMean = np.zeros(self.N )
