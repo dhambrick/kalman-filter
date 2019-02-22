@@ -37,7 +37,7 @@ def discretizedDynamics(state , noise):
     return newState            
 
 def reentryVehicleStatePropogater(state):
-    stateNoiseMean = np.zeros(5)
+    stateNoiseMean = np.zeros(3)
     stateNoiseSample = np.random.multivariate_normal(stateNoiseMean ,par["Q"] )
     newState = discretizedDynamics(state,stateNoiseSample)
     return newState
