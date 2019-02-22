@@ -12,13 +12,17 @@ class UnscentedKalmanFilter:
         self.transformedStateSigmas = self.procModel.transformedSigmaPoints
         self.transformedMeasurementSigmas = self.sensorModel.transformedSigmaPoints
         self.covWeights = self.procModel.covWeights
+        self.meanWeights = self.procModel.meanWeights
+        
         predictions = {"newState":self.predictedState ,"newMeasure":self.predictedObservation}
         return predictions
     
     def calcKGain(self,predictedState,predictedObservation):
         N = np.max(predictedState["mean"].shape)
         self.crossCovStateMeasure = np.zeros((N,N))
+       
         for i in xrange(0,2*N+1):
+       
             tempTerm1 = self.transformedStateSigmas[i] - predictedState["mean"]
             tempTerm2 = self.transformedMeasurementSigmas[i] - predictedObservation["mean"]
             term = self.covWeights[i] * np.outer(tempTerm1 , tempTerm2)
@@ -32,3 +36,21 @@ class UnscentedKalmanFilter:
         update = {"state":correctedStateEstimate , "cov":correctedStateCov}
         return update               
     
+    def run(self,stateEstimate,covEstimate, newObservation):
+        if (newObservation is not None) and (stateEstimate is not None) and (covEstimate is not None):
+            #Execute the kalman filter 
+            # 1: predict  
+            predictions = self.predict(stateEstimate,covEstimate)
+            # 2: Calculate K gain
+            K = self.calcKGain(predictions["newState"],predictions["newMeasure"])
+            # 3: Correct Prediction with K gain and sensor observation
+            correctedEstimate = self.correct(newObservation)
+            return correctedEstimate 
+        elif (newObservation is  None):
+            print "No new obeservation: Only executing predict phase"
+            #Execute the kalman filter 
+            # 1: predict  
+            predictions = self.predict(stateEstimate,covEstimate)
+            statePrediction = {"state":predictions["newState"]["mean"] , "cov":predictions["newState"]["cov"]}
+            return statePrediction
+        

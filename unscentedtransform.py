@@ -7,9 +7,8 @@ class UnscentedTransform:
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
-        self.SigmaPoints = []
-        self.transformedSigmas = []
     def generateSigmaPoints(self):
+        self.SigmaPoints = []
         gamma = np.sqrt(self.N + self.Lambda) 
         #In general we calculate  2N+1 sigma points where N is the dimension of the mean vector
         # The first Sigma Point is simply stateMean vector itself
@@ -22,6 +21,7 @@ class UnscentedTransform:
         #self.SigmaPoints = np.array(self.SigmaPoints)
         
     def propagateSigmaPoints(self):
+        self.transformedSigmas = []
         for sigmaPoint in self.SigmaPoints:
             self.transformedSigmas.append(self.nlt(sigmaPoint))
     def generateWeights(self):
@@ -61,6 +61,7 @@ class UnscentedTransform:
         self.estimatedMean = np.zeros(self.N )
         for i in xrange(2*self.N+1):
             self.estimatedMean = self.estimatedMean + (self.transformedSigmas[i] * self.meanWeights[i])
+        
 
         #Step 5: Calculate the propogated state covariance
         self.estimatedCovariance = np.zeros(self.stateCov.shape)
